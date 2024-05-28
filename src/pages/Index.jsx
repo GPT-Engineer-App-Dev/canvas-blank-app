@@ -1,6 +1,11 @@
-import { Box, Container, Flex, Text, VStack } from "@chakra-ui/react";
+import { Box, Container, Flex, Text, VStack, Spinner, Alert, AlertIcon } from "@chakra-ui/react";
+import { useEvents, useVenues, useComments } from "../integrations/supabase/index.js";
 
 const Index = () => {
+  const { data: events, error: eventsError, isLoading: eventsLoading } = useEvents();
+  const { data: venues, error: venuesError, isLoading: venuesLoading } = useVenues();
+  const { data: comments, error: commentsError, isLoading: commentsLoading } = useComments(events?.[0]?.id);
+
   return (
     <Container maxW="container.xl" p={0}>
       <Flex
@@ -29,8 +34,42 @@ const Index = () => {
           bg="white"
           boxShadow="md"
           borderRadius="md"
+          p={4}
         >
-          {/* This is the blank canvas area */}
+          {eventsLoading || venuesLoading || commentsLoading ? (
+            <Spinner />
+          ) : eventsError || venuesError || commentsError ? (
+            <Alert status="error">
+              <AlertIcon />
+              {eventsError?.message || venuesError?.message || commentsError?.message}
+            </Alert>
+          ) : (
+            <VStack spacing={4}>
+              <Text fontSize="2xl">Events</Text>
+              {events.map(event => (
+                <Box key={event.id} p={4} shadow="md" borderWidth="1px">
+                  <Text>{event.name}</Text>
+                  <Text>{event.description}</Text>
+                  <Text>{event.date}</Text>
+                  <Text>{event.venue_id.name}</Text>
+                </Box>
+              ))}
+              <Text fontSize="2xl">Venues</Text>
+              {venues.map(venue => (
+                <Box key={venue.id} p={4} shadow="md" borderWidth="1px">
+                  <Text>{venue.name}</Text>
+                  <Text>{venue.location}</Text>
+                  <Text>{venue.description}</Text>
+                </Box>
+              ))}
+              <Text fontSize="2xl">Comments</Text>
+              {comments.map(comment => (
+                <Box key={comment.id} p={4} shadow="md" borderWidth="1px">
+                  <Text>{comment.content}</Text>
+                </Box>
+              ))}
+            </VStack>
+          )}
         </Box>
       </Flex>
     </Container>
